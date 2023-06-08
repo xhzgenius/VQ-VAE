@@ -111,8 +111,8 @@ def save_model_and_results(model, results, hyperparameters, save_dir, epoch):
     old_checkpoing_path = os.path.join(save_dir, "%s.pth"%(epoch-5*hyperparameters["log_interval"]))
     if os.path.isfile(old_checkpoing_path):
         os.remove(old_checkpoing_path)
-        print("Deleted old checkpoint:", old_checkpoing_path)
+        # print("Deleted old checkpoint:", old_checkpoing_path)
     save_path = os.path.join(save_dir, "%s.pth"%epoch)
     torch.save(results_to_save, save_path)
-    print("Results saved to", save_path)
+    # print("Results saved to", save_path)
     
