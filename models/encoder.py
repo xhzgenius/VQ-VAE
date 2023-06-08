@@ -28,21 +28,22 @@ class Encoder(nn.Module):
         stride = 2
         lst = []
         for i in range(n_half_conv_layers-1):
+            din = h_dim//2**(n_half_conv_layers-i-1)
+            dout = h_dim//2**(n_half_conv_layers-i-2)
             lst.extend([
-                nn.Conv2d(h_dim//2**(n_half_conv_layers-i-1), h_dim//2**(n_half_conv_layers-i-2), kernel_size=kernel,
+                nn.Conv2d(din, dout, kernel_size=kernel,
                           stride=stride, padding=1), # width = (width+2-4)/2+1 = width/2
                 nn.ReLU(),
+                ResidualStack(dout, dout, res_h_dim, n_res_layers),
             ])
             
         self.conv_stack = nn.Sequential(
             nn.Conv2d(in_dim, h_dim//2**(n_half_conv_layers-1), kernel_size=kernel,
-                    stride=stride, padding=1), # width = (width+2-4)/2+1 = width/2
+                      stride=stride, padding=1), # width = (width+2-4)/2+1 = width/2
             nn.ReLU(),
             nn.Sequential(*lst), 
             nn.Conv2d(h_dim, h_dim, kernel_size=kernel-1,
                       stride=stride-1, padding=1), # width = (width+2-3)/1+1 = width
-            ResidualStack(
-                h_dim, h_dim, res_h_dim, n_res_layers)
         ) # width = width/4
 
     def forward(self, x):

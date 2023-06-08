@@ -25,8 +25,11 @@ class Decoder(nn.Module):
         stride = 2
         lst = []
         for i in range(n_half_conv_layers-1):
+            din = h_dim//2**i
+            dout = h_dim//2**(i+1)
             lst.extend([
-                nn.ConvTranspose2d(h_dim//2**i, h_dim//2**(i+1), kernel_size=kernel,
+                ResidualStack(din, din, res_h_dim, n_res_layers), 
+                nn.ConvTranspose2d(din, dout, kernel_size=kernel,
                                    stride=stride, padding=1), # width = (width+2-4)/2+1 = width/2
                 nn.ReLU(),
             ])
@@ -34,10 +37,9 @@ class Decoder(nn.Module):
         self.inverse_conv_stack = nn.Sequential(
             nn.ConvTranspose2d(
                 in_dim, h_dim, kernel_size=kernel-1, stride=stride-1, padding=1),
-            ResidualStack(h_dim, h_dim, res_h_dim, n_res_layers),
             nn.Sequential(*lst), 
             nn.ConvTranspose2d(h_dim//2**(n_half_conv_layers-1), 3, kernel_size=kernel,
-                               stride=stride, padding=1)
+                               stride=stride, padding=1), 
         )
 
     def forward(self, x):

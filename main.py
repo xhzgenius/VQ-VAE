@@ -61,6 +61,8 @@ print(model)
 # Set up optimizer and training loop
 optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
 vgg_loss = VGGLoss().to(device)
+l1_loss = nn.L1Loss()
+l2_loss = nn.MSELoss()
 
 model.train()
 
@@ -74,7 +76,8 @@ def train():
 
         embedding_loss, x_hat, encoding_indices, perplexity = model(x)
         # recon_loss = torch.mean((x_hat - x)**2) / x_train_var
-        recon_loss = vgg_loss(x_hat, x)
+        recon_loss = l1_loss(x_hat, x)*50
+        # recon_loss = vgg_loss(x_hat, x)
         loss = recon_loss + embedding_loss
 
         loss.backward()
