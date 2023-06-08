@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import torch.nn as nn
@@ -14,7 +15,7 @@ Hyperparameters
 timestamp = utils.readable_timestamp()
 
 parser.add_argument("--batch_size", type=int, default=32)
-parser.add_argument("--n_updates", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=5000)
 parser.add_argument("--n_hiddens", type=int, default=128)
 parser.add_argument("--n_residual_hiddens", type=int, default=32)
 parser.add_argument("--n_residual_layers", type=int, default=2)
@@ -23,18 +24,17 @@ parser.add_argument("--n_embeddings", type=int, default=512)
 parser.add_argument("--beta", type=float, default=.25)
 parser.add_argument("--learning_rate", type=float, default=3e-4)
 parser.add_argument("--log_interval", type=int, default=50)
-parser.add_argument("--dataset",  type=str, default='CIFAR10')
+parser.add_argument("--dataset", type=str, default='CIFAR10')
 
-# whether or not to save model
-parser.add_argument("-save", action="store_true")
-parser.add_argument("--filename",  type=str, default=timestamp)
+# # whether or not to save model
+# parser.add_argument("-save", action="store_true")
 
 args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-if args.save:
-    print('Results will be saved in ./results/vqvae_' + args.filename + '.pth')
+SAVE_PATH = os.path.join("./results", args.dataset+" "+timestamp)
+print("Results will be saved in", SAVE_PATH)
 
 """
 Load data and define batch data loaders
@@ -57,7 +57,7 @@ optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
 model.train()
 
 results = {
-    'n_updates': 0,
+    'epochs': 0,
     'recon_errors': [],
     'loss_vals': [],
     'perplexities': [],
@@ -66,7 +66,7 @@ results = {
 
 def train():
 
-    for i in range(args.n_updates):
+    for i in range(1, args.epochs+1):
         (x, _) = next(iter(training_loader))
         x = x.to(device)
         optimizer.zero_grad()
@@ -81,18 +81,18 @@ def train():
         results["recon_errors"].append(recon_loss.cpu().detach().numpy())
         results["perplexities"].append(perplexity.cpu().detach().numpy())
         results["loss_vals"].append(loss.cpu().detach().numpy())
-        results["n_updates"] = i
+        results["epochs"] = i
 
         if i % args.log_interval == 0:
             """
             save model and print values
             """
-            if args.save:
-                hyperparameters = args.__dict__
-                utils.save_model_and_results(
-                    model, results, hyperparameters, args.filename)
+            hyperparameters = args.__dict__
+            os.makedirs(SAVE_PATH, exist_ok=True)
+            utils.save_model_and_results(
+                model, results, hyperparameters, SAVE_PATH, i)
 
-            print('Update #', i, 'Recon Error:',
+            print('Epoch #', i, 'Recon Error:',
                   np.mean(results["recon_errors"][-args.log_interval:]),
                   'Loss', np.mean(results["loss_vals"][-args.log_interval:]),
                   'Perplexity:', np.mean(results["perplexities"][-args.log_interval:]))

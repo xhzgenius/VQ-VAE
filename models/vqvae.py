@@ -8,16 +8,18 @@ from models.decoder import Decoder
 
 
 class VQVAE(nn.Module):
-    def __init__(self, h_dim, res_h_dim, n_res_layers,
-                 n_embeddings, embedding_dim, beta, save_img_embedding_map=False):
+    def __init__(self, h_dim: int, res_h_dim: int, n_res_layers: int, 
+                 n_embeddings: int, embedding_dim: int, beta: float, 
+                 save_img_embedding_map: bool = False):
         super(VQVAE, self).__init__()
+        
         # encode image into continuous latent space
         self.encoder = Encoder(3, h_dim, n_res_layers, res_h_dim)
-        self.pre_quantization_conv = nn.Conv2d(
-            h_dim, embedding_dim, kernel_size=1, stride=1)
+        self.pre_quantization_conv = nn.Conv2d(h_dim, embedding_dim, kernel_size=1, stride=1)
+        
         # pass continuous latent vector through discretization bottleneck
-        self.vector_quantization = VectorQuantizer(
-            n_embeddings, embedding_dim, beta)
+        self.vector_quantization = VectorQuantizer(n_embeddings, embedding_dim, beta)
+        
         # decode the discrete latent representation
         self.decoder = Decoder(embedding_dim, h_dim, n_res_layers, res_h_dim)
 
@@ -26,13 +28,12 @@ class VQVAE(nn.Module):
         else:
             self.img_to_embedding_map = None
 
-    def forward(self, x, verbose=False):
+    def forward(self, x: torch.Tensor, verbose=False):
 
         z_e = self.encoder(x)
 
         z_e = self.pre_quantization_conv(z_e)
-        embedding_loss, z_q, perplexity, _, _ = self.vector_quantization(
-            z_e)
+        embedding_loss, z_q, perplexity, _, _ = self.vector_quantization(z_e)
         x_hat = self.decoder(z_q)
 
         if verbose:

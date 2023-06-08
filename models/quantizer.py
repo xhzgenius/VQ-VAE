@@ -17,7 +17,7 @@ class VectorQuantizer(nn.Module):
     - beta : commitment cost used in loss term, beta * ||z_e(x)-sg[e]||^2
     """
 
-    def __init__(self, n_e, e_dim, beta):
+    def __init__(self, n_e: int, e_dim: int, beta: float):
         super(VectorQuantizer, self).__init__()
         self.n_e = n_e
         self.e_dim = e_dim
@@ -26,7 +26,7 @@ class VectorQuantizer(nn.Module):
         self.embedding = nn.Embedding(self.n_e, self.e_dim)
         self.embedding.weight.data.uniform_(-1.0 / self.n_e, 1.0 / self.n_e)
 
-    def forward(self, z):
+    def forward(self, z_encode: torch.Tensor):
         """
         Inputs the output of the encoder network z and maps it to a discrete 
         one-hot vector that is the index of the closest embedding vector e_j
@@ -41,11 +41,12 @@ class VectorQuantizer(nn.Module):
             2. flatten input to (B*H*W,C)
 
         """
-        # reshape z -> (batch, height, width, channel) and flatten
-        z = z.permute(0, 2, 3, 1).contiguous()
-        z_flattened = z.view(-1, self.e_dim)
+        # reshape z_encode -> (batch, height, width, channel) and flatten
+        z_encode = z_encode.permute(0, 2, 3, 1).contiguous()
+        z_flattened = z_encode.view(-1, self.e_dim)
+        
+        # Shit codes. 👇 ——XHZ
         # distances from z to embeddings e_j (z - e)^2 = z^2 + e^2 - 2 e * z
-
         d = torch.sum(z_flattened ** 2, dim=1, keepdim=True) + \
             torch.sum(self.embedding.weight**2, dim=1) - 2 * \
             torch.matmul(z_flattened, self.embedding.weight.t())
@@ -57,14 +58,15 @@ class VectorQuantizer(nn.Module):
         min_encodings.scatter_(1, min_encoding_indices, 1)
 
         # get quantized latent vectors
-        z_q = torch.matmul(min_encodings, self.embedding.weight).view(z.shape)
+        z_q = torch.matmul(min_encodings, self.embedding.weight).view(z_encode.shape)
+        # Shit codes. 👆 ——XHZ
 
         # compute loss for embedding
-        loss = torch.mean((z_q.detach()-z)**2) + self.beta * \
-            torch.mean((z_q - z.detach()) ** 2)
+        # Bug fixed by XHZ. Beta should be multiplied by (sg[z_encode]-z_q)**2. 
+        loss = torch.mean((z_encode-z_q.detach())**2)*self.beta + torch.mean((z_encode.detach()-z_q)**2)
 
         # preserve gradients
-        z_q = z + (z_q - z).detach()
+        z_q = z_encode + (z_q-z_encode).detach()
 
         # perplexity
         e_mean = torch.mean(min_encodings, dim=0)

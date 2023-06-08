@@ -2,7 +2,7 @@ import torch
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-import time
+import datetime
 import os
 from datasets.block import BlockDataset, LatentBlockDataset
 import numpy as np
@@ -76,7 +76,7 @@ def load_data_and_data_loaders(dataset, batch_size):
         training_data, validation_data = load_cifar()
         training_loader, validation_loader = data_loaders(
             training_data, validation_data, batch_size)
-        x_train_var = np.var(training_data.train_data / 255.0)
+        x_train_var = np.var(training_data.data / 255.0)
 
     elif dataset == 'BLOCK':
         training_data, validation_data = load_block()
@@ -99,17 +99,20 @@ def load_data_and_data_loaders(dataset, batch_size):
 
 
 def readable_timestamp():
-    return time.ctime().replace('  ', ' ').replace(
-        ' ', '_').replace(':', '_').lower()
+    return datetime.datetime.now().strftime("%Y-%m-%d %H.%M.%S")
 
 
-def save_model_and_results(model, results, hyperparameters, timestamp):
-    SAVE_MODEL_PATH = os.getcwd() + '/results'
-
+def save_model_and_results(model, results, hyperparameters, save_dir, epoch):
     results_to_save = {
         'model': model.state_dict(),
         'results': results,
         'hyperparameters': hyperparameters
     }
-    torch.save(results_to_save,
-               SAVE_MODEL_PATH + '/vqvae_data_' + timestamp + '.pth')
+    old_checkpoing_path = os.path.join(save_dir, "%s.pth"%(epoch-5*hyperparameters["log_interval"]))
+    if os.path.isfile(old_checkpoing_path):
+        os.remove(old_checkpoing_path)
+        print("Deleted old checkpoint:", old_checkpoing_path)
+    save_path = os.path.join(save_dir, "%s.pth"%epoch)
+    torch.save(results_to_save, save_path)
+    print("Results saved to", save_path)
+    
