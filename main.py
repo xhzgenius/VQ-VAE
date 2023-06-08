@@ -8,13 +8,12 @@ import utils
 from models.vqvae import VQVAE
 from models.vgg_loss import VGGLoss
 
-parser = argparse.ArgumentParser()
 
-"""
-Hyperparameters
-"""
 timestamp = utils.readable_timestamp()
 
+
+# Hyperparameters
+parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--epochs", type=int, default=5000)
 parser.add_argument("--n_hiddens", type=int, default=128)
@@ -26,49 +25,47 @@ parser.add_argument("--beta", type=float, default=.25)
 parser.add_argument("--learning_rate", type=float, default=3e-4)
 parser.add_argument("--log_interval", type=int, default=50)
 parser.add_argument("--dataset", type=str, default='CIFAR10')
+parser.add_argument("--resume_dir", type=str, default=None)
+parser.add_argument("--resume_epoch", type=int, default=0)
 
 # # whether or not to save model
 # parser.add_argument("-save", action="store_true")
 
+
 args = parser.parse_args()
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 SAVE_PATH = os.path.join("./results", args.dataset+" "+timestamp)
 print("Results will be saved in", SAVE_PATH)
 
-"""
-Load data and define batch data loaders
-"""
 
+# Load data and define batch data loaders
 training_data, validation_data, training_loader, validation_loader, x_train_var = utils.load_data_and_data_loaders(
     args.dataset, args.batch_size)
-"""
-Set up VQ-VAE model with components defined in ./models/ folder
-"""
 
-model = VQVAE(args.n_hiddens, args.n_residual_hiddens,
-              args.n_residual_layers, args.n_embeddings, args.embedding_dim, args.beta).to(device)
+
+# Set up VQ-VAE model with components defined in ./models/ folder
+if args.resume_dir is None:
+    model = VQVAE(args.n_hiddens, args.n_residual_hiddens,
+                args.n_residual_layers, args.n_embeddings, args.embedding_dim, args.beta).to(device)
+    results = {
+        'epochs': 0,
+        'recon_errors': [],
+        'loss_vals': [],
+        'perplexities': [],
+    }
+else:
+    model, results, _ = utils.load_model(args.resume_dir+"/%d.pth"%args.resume_epoch)
+
+# Set up optimizer and training loop
+optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
 vgg_loss = VGGLoss().to(device)
 
-"""
-Set up optimizer and training loop
-"""
-optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-
 model.train()
-
-results = {
-    'epochs': 0,
-    'recon_errors': [],
-    'loss_vals': [],
-    'perplexities': [],
-}
 
 
 def train():
 
-    for i in range(1, args.epochs+1):
+    for i in range(1+args.resume_epoch, args.epochs+1+args.resume_epoch):
         (x, _) = next(iter(training_loader))
         x = x.to(device)
         optimizer.zero_grad()

@@ -126,12 +126,13 @@ def load_model(path):
     else:
         data = torch.load(path, map_location=lambda storage, loc: storage)
     
-    params = data["hyperparameters"]
+    hyperparameters = data["hyperparameters"]
+    results = data["results"]
     
-    model = VQVAE(params['n_hiddens'], params['n_residual_hiddens'],
-                  params['n_residual_layers'], params['n_embeddings'], 
-                  params['embedding_dim'], params['beta']).to(device)
+    model = VQVAE(hyperparameters['n_hiddens'], hyperparameters['n_residual_hiddens'],
+                  hyperparameters['n_residual_layers'], hyperparameters['n_embeddings'], 
+                  hyperparameters['embedding_dim'], hyperparameters['beta']).to(device)
 
     model.load_state_dict(data['model'])
     
-    return model, data
+    return model, results, hyperparameters
