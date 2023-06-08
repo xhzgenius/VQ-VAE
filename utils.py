@@ -7,6 +7,8 @@ import os
 from datasets.block import BlockDataset, LatentBlockDataset
 import numpy as np
 
+from models.vqvae import VQVAE
+
 
 def load_cifar():
     train = datasets.CIFAR10(root="data", train=True, download=True,
@@ -116,3 +118,20 @@ def save_model_and_results(model, results, hyperparameters, save_dir, epoch):
     torch.save(results_to_save, save_path)
     # print("Results saved to", save_path)
     
+
+def load_model(path):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        data = torch.load(path)
+    else:
+        data = torch.load(path, map_location=lambda storage, loc: storage)
+    
+    params = data["hyperparameters"]
+    
+    model = VQVAE(params['n_hiddens'], params['n_residual_hiddens'],
+                  params['n_residual_layers'], params['n_embeddings'], 
+                  params['embedding_dim'], params['beta']).to(device)
+
+    model.load_state_dict(data['model'])
+    
+    return model, data

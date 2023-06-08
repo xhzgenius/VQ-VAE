@@ -18,7 +18,7 @@ class VQVAE(nn.Module):
         self.pre_quantization_conv = nn.Conv2d(h_dim, embedding_dim, kernel_size=1, stride=1)
         
         # pass continuous latent vector through discretization bottleneck
-        self.vector_quantizer = VectorQuantizer(n_embeddings, embedding_dim, beta)
+        self.vector_quantizer = VectorQuantizer(embedding_dim, n_embeddings, beta)
         
         # decode the discrete latent representation
         self.decoder = Decoder(embedding_dim, h_dim, n_res_layers, res_h_dim)
@@ -33,7 +33,7 @@ class VQVAE(nn.Module):
         z_e = self.encoder(x)
 
         z_e = self.pre_quantization_conv(z_e)
-        z_q, embedding_loss, perplexity = self.vector_quantizer(z_e)
+        z_q, embedding_loss, encoding_indices, perplexity = self.vector_quantizer(z_e)
         x_hat = self.decoder(z_q)
 
         if verbose:
@@ -42,4 +42,4 @@ class VQVAE(nn.Module):
             print('recon data shape:', x_hat.shape)
             assert False
 
-        return embedding_loss, x_hat, perplexity
+        return embedding_loss, x_hat, encoding_indices, perplexity

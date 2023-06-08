@@ -6,6 +6,7 @@ import torch.optim as optim
 import argparse
 import utils
 from models.vqvae import VQVAE
+from models.vgg_loss import VGGLoss
 
 parser = argparse.ArgumentParser()
 
@@ -48,6 +49,7 @@ Set up VQ-VAE model with components defined in ./models/ folder
 
 model = VQVAE(args.n_hiddens, args.n_residual_hiddens,
               args.n_residual_layers, args.n_embeddings, args.embedding_dim, args.beta).to(device)
+vgg_loss = VGGLoss().to(device)
 
 """
 Set up optimizer and training loop
@@ -71,8 +73,9 @@ def train():
         x = x.to(device)
         optimizer.zero_grad()
 
-        embedding_loss, x_hat, perplexity = model(x)
-        recon_loss = torch.mean((x_hat - x)**2) / x_train_var
+        embedding_loss, x_hat, encoding_indices, perplexity = model(x)
+        # recon_loss = torch.mean((x_hat - x)**2) / x_train_var
+        recon_loss = vgg_loss(x_hat, x)
         loss = recon_loss + embedding_loss
 
         loss.backward()
@@ -92,8 +95,8 @@ def train():
             utils.save_model_and_results(
                 model, results, hyperparameters, SAVE_PATH, i)
 
-            print('Epoch #', i, 'Recon Error:',
-                  np.mean(results["recon_errors"][-args.log_interval:]),
+            print('Epoch #', i, 
+                  'Recon Error:', np.mean(results["recon_errors"][-args.log_interval:]),
                   'Loss', np.mean(results["loss_vals"][-args.log_interval:]),
                   'Perplexity:', np.mean(results["perplexities"][-args.log_interval:]))
 

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 '''
 Code reference: https://zhuanlan.zhihu.com/p/463043201
-Type annotation by XHZ
+Modified by XHZ
 '''
 
 class VectorQuantizer(nn.Module):
@@ -30,13 +30,13 @@ class VectorQuantizer(nn.Module):
         # initialize embeddings
         self.embedding_vectors = nn.Embedding(self.num_embeddings, self.embedding_dim)
         
-    def forward(self, z_encoded: torch.Tensor) -> "tuple[torch.Tensor, torch.Tensor, torch.Tensor]":
+    def forward(self, z_encoded: torch.Tensor) -> "tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]":
         # [B, C, H, W] -> [B, H, W, C]
         z_encoded = z_encoded.permute(0, 2, 3, 1).contiguous()
         # [B, H, W, C] -> [BHW, C]
-        flat_x = z_encoded.reshape(-1, self.embedding_dim)
+        flat_z = z_encoded.reshape(-1, self.embedding_dim)
         
-        encoding_indices = self.get_code_indices(flat_x)
+        encoding_indices = self.get_code_indices(flat_z)
         z_quantized = self.quantize(encoding_indices).view_as(z_encoded) # [B, H, W, C]
         
         # embedding loss: move the embeddings towards the encoder's output
@@ -56,14 +56,14 @@ class VectorQuantizer(nn.Module):
             embedding_distribution*torch.log(embedding_distribution+1e-10)
             ))
         
-        return z_quantized, loss, perplexity
+        return z_quantized, loss, encoding_indices, perplexity
     
-    def get_code_indices(self, flat_x: torch.Tensor) -> torch.Tensor:
+    def get_code_indices(self, flat_z: torch.Tensor) -> torch.Tensor:
         # compute L2 distance
         distances = (
-            torch.sum(flat_x ** 2, dim=1, keepdim=True) +
+            torch.sum(flat_z ** 2, dim=1, keepdim=True) +
             torch.sum(self.embedding_vectors.weight ** 2, dim=1) -
-            2. * torch.matmul(flat_x, self.embedding_vectors.weight.t())
+            2. * torch.matmul(flat_z, self.embedding_vectors.weight.t())
         ) # [N, M]
         encoding_indices = torch.argmin(distances, dim=1) # [N,]
         return encoding_indices
