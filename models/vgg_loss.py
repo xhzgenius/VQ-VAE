@@ -8,16 +8,19 @@ Modified by XHZ
 '''
 
 class VGGLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, vgg_version: str = "vgg11"):
         super().__init__()
-        
-        # feature_layers = (2, 7, 12, 21, 30)
-        feature_layers = (0, 6, 11, 16)
-        # self.weights = (1.0, 1.0, 1.0, 1.0, 1.0)
-        self.weights = (1.0, 1.0, 1.0, 1.0)
 
-        vgg = torchvision.models.vgg11(weights=torchvision.models.VGG11_Weights.DEFAULT).features
-        # vgg = torchvision.models.vgg19(weights=torchvision.models.VGG19_Weights.DEFAULT).features
+        if vgg_version=="vgg11":
+            vgg = torchvision.models.vgg11(weights=torchvision.models.VGG11_Weights.DEFAULT).features
+            feature_layers = (0, 6, 11, 16)
+            self.weights = (3.0, 1.0, 1.0, 1.0)
+        elif vgg_version=="vgg19":
+            vgg = torchvision.models.vgg19(weights=torchvision.models.VGG19_Weights.DEFAULT).features
+            feature_layers = (2, 7, 12, 21, 30)
+            self.weights = (1.0, 1.0, 1.0, 1.0, 1.0)
+        else:
+            raise ValueError("VGG version not supported: %s"%vgg_version)
         # print(vgg)
         
         self.layers = nn.ModuleList()

@@ -7,7 +7,7 @@ import argparse
 import utils
 from models.vqvae import VQVAE
 from models.vgg_loss import VGGLoss
-
+from focal_frequency_loss import FocalFrequencyLoss as FFL
 
 timestamp = utils.readable_timestamp()
 
@@ -60,9 +60,11 @@ print(model)
 
 # Set up optimizer and training loop
 optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-vgg_loss = VGGLoss().to(device)
+vgg_loss = VGGLoss(vgg_version="vgg11").to(device)
 l1_loss = nn.L1Loss()
 l2_loss = nn.MSELoss()
+# input shape: (B, C, H, W)
+ffloss = FFL(loss_weight=1.0, alpha=1.0)  # Params same as https://github.com/EndlessSora/focal-frequency-loss. 
 
 model.train()
 
@@ -76,8 +78,9 @@ def train():
 
         embedding_loss, x_hat, encoding_indices, perplexity = model(x)
         # recon_loss = torch.mean((x_hat - x)**2) / x_train_var
-        recon_loss = l1_loss(x_hat, x)*50
-        # recon_loss = vgg_loss(x_hat, x)
+        # recon_loss = l1_loss(x_hat, x)*50
+        # recon_loss = vgg_loss(x_hat, x) + l2_loss(x_hat, x)*10
+        recon_loss = ffloss(x_hat, x)*500 + l2_loss(x_hat, x)*5
         loss = recon_loss + embedding_loss
 
         loss.backward()
