@@ -2,4 +2,7 @@ python main.py --batch_size 1024 --dataset CIFAR10
 
 python main.py --batch_size 1024 --dataset CIFAR10 --resume_dir "./results/CIFAR10 2023-06-08 21.52.27 VGG11" --resume_epoch 5000
 
-python main.py --batch_size 1024 --dataset anime --n_half_conv_layers 3
+python main.py --batch_size 128 --dataset anime --n_half_conv_layers 3
+
+python main.py --batch_size 65536 --dataset anime --n_half_conv_layers 3 --resume_dir "./results/anime 2023-06-09 00.19.10 normalized" --resume_epoch 5000
+

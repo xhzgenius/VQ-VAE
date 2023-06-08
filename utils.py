@@ -92,7 +92,14 @@ def load_data_and_data_loaders(dataset, batch_size):
             training_data, validation_data, batch_size)
 
         x_train_var = np.var(training_data.data)
-
+    elif dataset == "anime":
+        transform=transforms.Compose([transforms.ToTensor(),
+                                    #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                                      ])
+        training_data = datasets.ImageFolder("D:/其他杂七杂八/爷的高清美少女壁纸/数据集/faces64x", transform)
+        validation_data = datasets.ImageFolder("D:/其他杂七杂八/爷的高清美少女壁纸/数据集/faces64x", transform)
+        training_loader, validation_loader = data_loaders(training_data, validation_data, batch_size)
+        x_train_var = None
     else:
         raise ValueError(
             'Invalid dataset: only CIFAR10 and BLOCK datasets are supported.')
@@ -130,7 +137,9 @@ def load_model(path):
     results = data["results"]
     
     model = VQVAE(hyperparameters['n_hiddens'], hyperparameters['n_residual_hiddens'],
-                  hyperparameters['n_residual_layers'], hyperparameters['n_embeddings'], 
+                  hyperparameters['n_half_conv_layers'], 
+                  hyperparameters['n_residual_layers'], 
+                  hyperparameters['n_embeddings'], 
                   hyperparameters['embedding_dim'], hyperparameters['beta']).to(device)
 
     model.load_state_dict(data['model'])
