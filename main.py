@@ -18,6 +18,7 @@ parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--epochs", type=int, default=5000)
 parser.add_argument("--n_hiddens", type=int, default=128)
 parser.add_argument("--n_residual_hiddens", type=int, default=32)
+parser.add_argument("--n_half_conv_layers", type=int, default=2)
 parser.add_argument("--n_residual_layers", type=int, default=2)
 parser.add_argument("--embedding_dim", type=int, default=64)
 parser.add_argument("--n_embeddings", type=int, default=512)
@@ -45,8 +46,8 @@ training_data, validation_data, training_loader, validation_loader, x_train_var 
 
 # Set up VQ-VAE model with components defined in ./models/ folder
 if args.resume_dir is None:
-    model = VQVAE(args.n_hiddens, args.n_residual_hiddens,
-                args.n_residual_layers, args.n_embeddings, args.embedding_dim, args.beta).to(device)
+    model = VQVAE(args.n_hiddens, args.n_residual_hiddens, args.n_half_conv_layers, 
+                  args.n_residual_layers, args.n_embeddings, args.embedding_dim, args.beta).to(device)
     results = {
         'epochs': 0,
         'recon_errors': [],
@@ -55,6 +56,7 @@ if args.resume_dir is None:
     }
 else:
     model, results, _ = utils.load_model(args.resume_dir+"/%d.pth"%args.resume_epoch)
+print(model)
 
 # Set up optimizer and training loop
 optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
