@@ -80,7 +80,7 @@ def train():
         # recon_loss = torch.mean((x_hat - x)**2) / x_train_var
         # recon_loss = l1_loss(x_hat, x)*50
         # recon_loss = vgg_loss(x_hat, x) + l1_loss(x_hat, x)*5
-        recon_loss = vgg_loss(x_hat, x) + l2_loss(x_hat, x)*5
+        recon_loss = vgg_loss(x_hat, x) + l2_loss(x_hat, x)*10
         # recon_loss = ffloss(x_hat, x)*2000 + l2_loss(x_hat, x)*10
         loss = recon_loss + embedding_loss
 
