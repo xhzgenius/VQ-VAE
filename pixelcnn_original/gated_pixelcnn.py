@@ -15,7 +15,7 @@ make sure you run from vqvae directory
 current_dir = sys.path.append(os.getcwd())
 pixelcnn_dir = sys.path.append(os.getcwd()+ '/pixelcnn')
 
-from pixelcnn.models import GatedPixelCNN
+from pixelcnn_original.models import GatedPixelCNN
 import utils
 
 """
