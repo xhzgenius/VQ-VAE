@@ -1,3 +1,7 @@
+'''
+The original implementation of the vector quantizer. 
+Deprecated by XHZ. Please use the more elegant one. 
+'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

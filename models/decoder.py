@@ -1,4 +1,7 @@
-
+'''
+The decoder of VQVAE. 
+Rewritten by XHZ. 
+'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

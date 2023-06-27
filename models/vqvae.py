@@ -1,4 +1,7 @@
-
+'''
+The VQVAE model. 
+Created by the original author and updated (really a lot) by XHZ. 
+'''
 import torch
 import torch.nn as nn
 import numpy as np

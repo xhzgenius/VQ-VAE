@@ -1,11 +1,13 @@
+'''
+A more elegant implementation of the vector quantizer. (Much more elegant than the original one!)
+
+Code reference: https://zhuanlan.zhihu.com/p/463043201
+Modified by XHZ
+'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-'''
-Code reference: https://zhuanlan.zhihu.com/p/463043201
-Modified by XHZ
-'''
 
 class VectorQuantizer(nn.Module):
     def __init__(self, embedding_dim: int, num_embeddings: int, beta: float):

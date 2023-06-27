@@ -1,4 +1,7 @@
-
+'''
+The residual layer of VQVAE. 
+Modified by XHZ. 
+'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

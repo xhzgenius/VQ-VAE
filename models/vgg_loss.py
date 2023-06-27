@@ -1,11 +1,15 @@
+
+'''
+The VGG loss function for training VQVAE. 
+Purposed and created by XHZ. 
+
+Code reference: https://github.com/bryandlee/stylegan2-encoder-pytorch/blob/master/train_encoder.py
+Modified by XHZ. 
+'''
 import torch
 import torch.nn as nn
 import torchvision
 
-'''
-Code reference: https://github.com/bryandlee/stylegan2-encoder-pytorch/blob/master/train_encoder.py
-Modified by XHZ
-'''
 
 class VGGLoss(nn.Module):
     def __init__(self, vgg_version: str = "vgg11"):
