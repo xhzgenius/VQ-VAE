@@ -13,23 +13,27 @@ import utils
 
 # Load models. 
 model: VQVAE
-model, results, hyperparameters = utils.load_model("./results/anime 2023-06-09 05.27.15 L2+VGG/14500.pth")
-pixelcnn: GatedPixelCNN = torch.load("./results/pixelcnn 2023-06-28 03.58.36/180.pth")
+model, results, hyperparameters = utils.load_model("./results/anime 2023-06-28 04.42.54/12000.pth")
+pixelcnn: GatedPixelCNN = torch.load("./results/pixelcnn 2023-06-28 07.27.22/80.pth")
 
 # Hyperparameters. 
 num_embeddings = 512
 
 # Create an empty array of priors.
-n_samples = 1
+n_samples = 32
 prior_size = (8, 8) # h, w
-priors = torch.zeros((n_samples,) + prior_size, dtype=torch.long).cuda()
+# priors = torch.zeros((n_samples,) + prior_size, dtype=torch.long).cuda()
+real_priors: np.ndarray = np.load("./data/encoding_indices/anime.npy")
+priors = torch.as_tensor(real_priors[np.random.randint(0, len(real_priors), size=n_samples)]).view(n_samples, *prior_size).cuda()
+# priors = torch.randint(0, 512, size=(n_samples,)+prior_size).cuda()
+print(priors.shape)
 
 # use pixelcnn to generate priors
 pixelcnn.eval()
 
 # Iterate over the priors because generation has to be done sequentially pixel by pixel.
-for row in range(prior_size[0]):
-    for col in range(prior_size[1]):
+for row in range(0, prior_size[0]):
+    for col in range(0, prior_size[1]):
         # Feed the whole array and retrieving the pixel value probabilities for the next pixel.
         with torch.inference_mode():
             one_hot_priors = F.one_hot(priors, num_embeddings).float().permute(0, 3, 1, 2).contiguous()
@@ -37,13 +41,14 @@ for row in range(prior_size[0]):
             probs = F.softmax(logits[:, :, row, col], dim=-1)
             # Use the probabilities to pick pixel values and append the values to the priors.
             priors[:, row, col] = torch.multinomial(probs, num_samples=1).squeeze(dim=-1)
-            print("Current priors:", priors)
+            # print("Current priors:", priors)
 # Perform an embedding lookup and Generate new images
 with torch.inference_mode():
+    # priors = torch.randint(low=0, size=(n_samples,)+prior_size, high=num_embeddings, dtype=torch.long).cuda()
     z = model.vector_quantizer.quantize(priors)
     z = z.permute(0, 3, 1, 2).contiguous()
     pred: torch.Tensor = model.decoder(z)
-    print("Generated new images:", pred.shape) # [n_samples, 3, 64, 64]
+    # print("Generated new images:", pred.shape) # [n_samples, 3, 64, 64]
 
 generated_samples = pred.permute(0, 2, 3, 1).cpu().numpy() # [n_samples, 64, 64, 3]
 

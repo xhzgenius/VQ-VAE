@@ -20,7 +20,7 @@ timestamp = utils.readable_timestamp()
 # Hyperparameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size", type=int, default=32)
-parser.add_argument("--epochs", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=20000)
 parser.add_argument("--n_hiddens", type=int, default=128)
 parser.add_argument("--n_residual_hiddens", type=int, default=32)
 parser.add_argument("--n_half_conv_layers", type=int, default=2)

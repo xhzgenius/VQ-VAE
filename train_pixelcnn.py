@@ -17,10 +17,24 @@ import utils
 
 num_embeddings = 512
 
-pixelcnn = GatedPixelCNN(num_embeddings, 128, num_embeddings)
+resume_path = "./results/pixelcnn 2023-06-28 07.27.22/"
+resume_epoch = 80
+# resume_path = None
+if resume_path is not None:
+    start_epoch = resume_epoch+1
+    SAVE_PATH = resume_path
+    pixelcnn = torch.load(resume_path+"%d.pth"%resume_epoch) # For resuming training. 
+else:
+    timestamp = utils.readable_timestamp()
+    start_epoch = 1
+    SAVE_PATH = os.path.join("./results", "pixelcnn "+timestamp)
+    os.makedirs(SAVE_PATH, exist_ok=True)
+    pixelcnn = GatedPixelCNN(num_embeddings, 512, num_embeddings)
+print("Results will be saved in", SAVE_PATH)
+
 pixelcnn = pixelcnn.cuda()
 
-optimizer = torch.optim.Adam(pixelcnn.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(pixelcnn.parameters(), lr=1e-4)
 
 train_indices = np.load("./data/encoding_indices/anime.npy")
 train_indices = torch.as_tensor(train_indices)
@@ -38,15 +52,10 @@ class IndiceDataset(Dataset):
 
 indices_loader = DataLoader(IndiceDataset(train_indices), batch_size=1023)
 
-timestamp = utils.readable_timestamp()
-SAVE_PATH = os.path.join("./results", "pixelcnn "+timestamp)
-os.makedirs(SAVE_PATH, exist_ok=True)
-print("Results will be saved in", SAVE_PATH)
-
 # train pixelcnn
-total_epochs = 200
-save_freq = 20
-for epoch in tqdm(range(1, total_epochs+1)):
+total_epochs = 500
+save_freq = 5
+for epoch in tqdm(range(start_epoch, total_epochs+start_epoch)):
     print("Start training epoch {}".format(epoch,))
     for i, (indices) in enumerate(indices_loader):
         indices = indices.cuda()
@@ -63,7 +72,7 @@ for epoch in tqdm(range(1, total_epochs+1)):
         loss.backward()
         optimizer.step()
         if i+1==len(indices_loader):
-            print("[{}/{}]: loss {}".format(epoch, total_epochs, loss.item()))
+            print("[{}/{}]: loss {}".format(epoch, total_epochs+start_epoch-1, loss.item()))
     
     if epoch%save_freq==0: # Save the latest model and delete the oldest one. 
         old_checkpoing_path = os.path.join(SAVE_PATH, "%s.pth"%(epoch-5*save_freq))
