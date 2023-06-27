@@ -1,3 +1,8 @@
+'''
+The script to train the VQVAE model. 
+
+Created by the original author and modified by XHZ. 
+'''
 import os
 import numpy as np
 import torch

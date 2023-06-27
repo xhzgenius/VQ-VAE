@@ -3,6 +3,7 @@ The implementation of the Gated PixelCNN model.
 
 Code reference:
 The code is partly selected from https://github.com/xiaohu2015/nngen/blob/main/models/vq_vae.ipynb. 
+Modified and debugged by XHZ. 
 '''
 import torch
 from torch import nn
@@ -15,9 +16,9 @@ class MaskedConv2d(nn.Conv2d):
     
     Args:
         mask (torch.Tensor): the mask tensor.
-        in_channels (int) – Number of channels in the input image.
-        out_channels (int) – Number of channels produced by the convolution.
-        kernel_size (int or tuple) – Size of the convolving kernel
+        in_channels (int) - Number of channels in the input image.
+        out_channels (int) - Number of channels produced by the convolution.
+        kernel_size (int or tuple) - Size of the convolving kernel
     """
     
     def __init__(self, mask, in_channels, out_channels, kernel_size, **kwargs):
@@ -84,15 +85,19 @@ class GatedMaskedConv(nn.Module):
         self.conv_horiz_1x1 = nn.Conv2d(in_channels, in_channels, kernel_size=1)
 
     def forward(self, v_stack, h_stack):
+        chunk_dim = 0 if len(v_stack.shape)==3 else 1
+        # Chunk at dim 0 if input is unbatched; 1 if batched. ——XHZ
+        
         # Vertical stack (left)
         v_stack_feat = self.conv_vert(v_stack)
-        v_val, v_gate = v_stack_feat.chunk(2, dim=1)
+        v_val, v_gate = v_stack_feat.chunk(2, dim=chunk_dim)
         v_stack_out = torch.tanh(v_val) * torch.sigmoid(v_gate)
 
         # Horizontal stack (right)
         h_stack_feat = self.conv_horiz(h_stack)
         h_stack_feat = h_stack_feat + self.conv_vert_to_horiz(v_stack_feat)
-        h_val, h_gate = h_stack_feat.chunk(2, dim=1)
+        # print("h_stack_feat:", h_stack_feat.shape)
+        h_val, h_gate = h_stack_feat.chunk(2, dim=chunk_dim)
         h_stack_feat = torch.tanh(h_val) * torch.sigmoid(h_gate)
         h_stack_out = self.conv_horiz_1x1(h_stack_feat)
         h_stack_out = h_stack_out + h_stack
@@ -125,7 +130,10 @@ class GatedPixelCNN(nn.Module):
         h_stack = self.conv_hstack(x)
         # Gated Convolutions
         for layer in self.conv_layers:
+            # print("Layer", layer._get_name(), "starting... ")
+            # print("v_stack", v_stack.shape, "h_stack", h_stack.shape)
             v_stack, h_stack = layer(v_stack, h_stack)
+            # print("Layer", layer._get_name(), "completed. ")
         # 1x1 classification convolution
         # Apply ELU before 1x1 convolution for non-linearity on residual connection
         out = self.conv_out(F.elu(h_stack))
