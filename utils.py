@@ -148,3 +148,9 @@ def load_model(path):
     model.load_state_dict(data['model'])
     
     return model, results, hyperparameters
+
+def chou_ka(p: float) -> bool:
+    if np.random.random()<p:
+        return True
+    else:
+        return False

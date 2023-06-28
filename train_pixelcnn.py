@@ -18,7 +18,7 @@ import utils
 num_embeddings = 512
 
 resume_path = "./results/pixelcnn 2023-06-28 07.27.22/"
-resume_epoch = 80
+resume_epoch = 95
 # resume_path = None
 if resume_path is not None:
     start_epoch = resume_epoch+1
@@ -34,7 +34,7 @@ print("Results will be saved in", SAVE_PATH)
 
 pixelcnn = pixelcnn.cuda()
 
-optimizer = torch.optim.Adam(pixelcnn.parameters(), lr=1e-4)
+optimizer = torch.optim.Adam(pixelcnn.parameters(), lr=3e-5)
 
 train_indices = np.load("./data/encoding_indices/anime.npy")
 train_indices = torch.as_tensor(train_indices)
