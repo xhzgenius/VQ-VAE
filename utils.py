@@ -99,8 +99,8 @@ def load_data_and_data_loaders(dataset, batch_size):
         transform=transforms.Compose([transforms.ToTensor(),
                                     #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                                       ])
-        training_data = datasets.ImageFolder("D:/其他杂七杂八/爷的高清美少女壁纸/数据集/faces64x", transform)
-        validation_data = datasets.ImageFolder("D:/其他杂七杂八/爷的高清美少女壁纸/数据集/faces64x_validation", transform)
+        training_data = datasets.ImageFolder("./data/faces64x", transform)
+        validation_data = datasets.ImageFolder("./data/faces64x_validation", transform)
         training_loader, validation_loader = data_loaders(training_data, validation_data, batch_size)
         x_train_var = None
     else:
